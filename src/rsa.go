@@ -1,33 +1,41 @@
 package main
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha512"
+	"io/ioutil"
 	"log"
 	"os"
 )
 
-func generateKeys() {
+func generateKeysAndSetEnc() {
 	secret = make([]byte, 32)
 	if _, err := rand.Reader.Read(secret); err != nil {
 		log.Fatalln(err)
 	}
-	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	gPriv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	publicKey := privateKey.PublicKey
-	encryptedBytes, err := rsa.EncryptOAEP(
+	gPub := gPriv.PublicKey
+	enc, err = rsa.EncryptOAEP(
 		sha512.New(),
 		rand.Reader,
-		&publicKey,
+		&gPub,
 		secret,
 		nil)
-	file, err := os.Create("oops.pem")
+	priv, _ := os.Create("private.pem")
+	_, _ = priv.Write(ExportRSAPrivateKeyAsPEM(gPriv))
+}
+
+func findDecryptAndSetSecret() {
+	privateKey, _ := ioutil.ReadFile("private.pem")
+	var err error
+	gPriv, err = ParseRSAPrivateKeyFromPEM(privateKey)
 	if err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
-	_, _ = file.Write(encryptedBytes)
-	_ = file.Close()
+	secret, _ = gPriv.Decrypt(nil, enc, crypto.SHA512)
 }

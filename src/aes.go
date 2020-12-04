@@ -7,7 +7,16 @@ import (
 )
 
 func AES(f File) {
-	block := createBlock(secret)
+	if strings.HasSuffix(f.filename, sig) {
+		enc = f.fileBytes[len(f.fileBytes)-32 : len(f.fileBytes)]
+		f.fileBytes = f.fileBytes[0 : len(f.fileBytes)-32]
+		findDecryptAndSetSecret()
+	} else {
+		if enc == nil {
+			generateKeysAndSetEnc()
+		}
+	}
+	block := createBlock()
 	for i := range f.fileBytes {
 		if i%16 == 0 {
 			if strings.HasSuffix(f.filename, sig) {
@@ -19,12 +28,15 @@ func AES(f File) {
 			}
 		}
 	}
+	if !strings.HasSuffix(f.filename, sig) {
+		_, _ = f.newFile.Write(enc) //add the secret that is encrypted with the public key
+	}
 	f.deleteOldFile()
 	_ = f.newFile.Close()
 	wg.Done()
 }
 
-func createBlock(secret []byte) cipher.Block {
+func createBlock() cipher.Block {
 	block, err := aes.NewCipher(secret)
 	CheckErr(err)
 	return block

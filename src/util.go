@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rsa"
 	"io/ioutil"
 	"log"
 	"os"
@@ -16,6 +17,9 @@ func CheckErr(err error) {
 var (
 	sig    = ".merk"
 	secret []byte
+	gPriv  *rsa.PrivateKey
+	gPub   *rsa.PublicKey
+	enc    []byte
 )
 
 type File struct {

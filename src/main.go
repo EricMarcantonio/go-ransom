@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -22,20 +23,23 @@ func main() {
 		_ = os.Chdir(*filenamePTR)
 		files, err := ioutil.ReadDir(*filenamePTR)
 		CheckErr(err)
-		for _, file := range files{
-			if !file.IsDir(){
+		for _, file := range files {
+
+			if !file.IsDir() {
+				if !strings.HasSuffix(file.Name(), sig) {
+					generateKeysAndSetEnc()
+				}
 				wg.Add(1)
-				go kickOff(initAnFileStruct(file.Name()))
+				go AES(initAnFileStruct(file.Name()))
 			}
 		}
 	} else {
+		if !strings.HasSuffix(*filenamePTR, sig) {
+			generateKeysAndSetEnc()
+		}
 		wg.Add(1)
-		go kickOff(initAnFileStruct(*filenamePTR))
+		go AES(initAnFileStruct(*filenamePTR))
 	}
 	wg.Wait()
 	log.Println("Finished working...")
-}
-
-func kickOff(f File){
-	AES(f)
 }

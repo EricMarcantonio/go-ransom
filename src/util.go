@@ -7,16 +7,16 @@ import (
 	"strings"
 )
 
-func CheckErr(err error)  {
+func CheckErr(err error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
-var (
-	sig = ".merk"
-	secret = "123456789ABCDEFGHIJKLMNOPQRSTUVW"
-)
 
+var (
+	sig    = ".merk"
+	secret []byte
+)
 
 type File struct {
 	filename    string
@@ -32,7 +32,7 @@ func (f File) deleteOldFile() {
 
 func initAnFileStruct(name string) File {
 	var newFileName string
-	if strings.HasSuffix(name, sig){
+	if strings.HasSuffix(name, sig) {
 		temp := []rune(name)
 		newFileName = string(temp[0 : len(name)-len(sig)])
 	} else {

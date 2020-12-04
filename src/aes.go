@@ -20,11 +20,12 @@ func AES(f File) {
 		}
 	}
 	f.deleteOldFile()
+	_ = f.newFile.Close()
 	wg.Done()
 }
 
-func createBlock(secret string) cipher.Block {
-	block, err := aes.NewCipher([]byte(secret))
+func createBlock(secret []byte) cipher.Block {
+	block, err := aes.NewCipher(secret)
 	CheckErr(err)
 	return block
 }

